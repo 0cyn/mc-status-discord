@@ -16,6 +16,10 @@ client = discord.Client()
 def split_lr_lists(source: List[str], pad_size: int, out_prefix, out_suffix):
     output_str = out_prefix if out_prefix else ''
 
+    if len(source) < 1:
+        output_str += out_suffix
+        return output_str
+
     left, right = source[::2], source[1::2]
 
     max_left_len = len(max(left, key=len)) + pad_size
@@ -73,17 +77,21 @@ class MCServerStatusBot:
                 embed = discord.Embed(title="Loading...", description="", color=0x000000)
                 loading_msg = await channel.send(embed=embed)
                 self.startup_has_been_run = True
+        try:
+            server = JavaServer.lookup("sh.community.tf:25566")
+            query = server.query()
+            player_name_list = query.players.names
 
-        server = JavaServer.lookup("sh.community.tf:25566")
-        query = server.query()
-        player_name_list = query.players.names
+            if set(player_name_list) == set(self.most_recent_player_list):
+                return
 
-        if set(player_name_list) == set(self.most_recent_player_list):
-            return
-
-        self.most_recent_player_list = player_name_list
-
-        player_text = split_lr_lists(player_name_list, pad_size=5, out_prefix='```\n', out_suffix='\n```\n')
+            self.most_recent_player_list = player_name_list
+            if len(player_name_list) > 0:
+                player_text = split_lr_lists(player_name_list, pad_size=5, out_prefix='```\n', out_suffix='\n```\n')
+            else:
+                player_text = 'No Players Online'
+        except:
+            player_text = 'Server Offline'
 
         if self.dry:
             print(player_text)
