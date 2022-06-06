@@ -109,7 +109,11 @@ class MCServerStatusBot:
                 await loading_msg.delete()
 
             if self.active_status_message:
-                await self.active_status_message.edit(embed=embed)
+                try:
+                    await self.active_status_message.edit(embed=embed)
+                except discord.errors.NotFound:
+                    await channel.purge(limit=100, check=lambda m: m.author == client.user)
+                    self.active_status_message = await channel.send(embed=embed)
             else:
                 self.active_status_message = await channel.send(embed=embed)
 
