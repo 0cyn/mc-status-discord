@@ -35,12 +35,14 @@ def split_lr_lists(source: List[str], pad_size: int, out_prefix, out_suffix):
 class MCServerStatusBot:
     INSTANCE = None
 
-    def __init__(self, token, target_channel, dry=False):
+    def __init__(self, token, target_channel, server_query_ip, dry=False):
         self.token = token
 
         MCServerStatusBot.INSTANCE = self
 
         self.target_channel = target_channel
+
+        self.server_query_ip = server_query_ip
 
         self.active_status_message = None
         self.startup_has_been_run = False
@@ -77,8 +79,11 @@ class MCServerStatusBot:
                 embed = discord.Embed(title="Loading...", description="", color=0x000000)
                 loading_msg = await channel.send(embed=embed)
                 self.startup_has_been_run = True
+
+        player_name_list = []
+
         try:
-            server = JavaServer.lookup("sh.community.tf:25566")
+            server = JavaServer.lookup(self.server_query_ip)
             query = server.query()
             player_name_list = query.players.names
 
@@ -114,6 +119,7 @@ if __name__ == "__main__":
         keyfile = json.load(j)
         bot_token = keyfile['token']
         target_channel_id = int(keyfile['target_channel_id'])
+        server_query_ip = keyfile['server_query_ip']
 
     dry_run = False
 
@@ -121,4 +127,7 @@ if __name__ == "__main__":
         print("Doing Dry Run")
         dry_run = True
 
-    MCServerStatusBot(bot_token, target_channel_id, dry_run)
+    MCServerStatusBot(bot_token,
+                      target_channel=target_channel_id,
+                      server_query_ip=server_query_ip,
+                      dry=dry_run)
